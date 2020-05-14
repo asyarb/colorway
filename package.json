@@ -1,15 +1,15 @@
 {
+  "name": "colorway",
+  "author": "Anthony Yarbrough",
   "version": "0.1.0",
   "license": "MIT",
+  "module": "dist/colorway.esm.js",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
     "src"
   ],
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
@@ -17,17 +17,12 @@
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },
+  "engines": {
+    "node": ">=10"
+  },
   "peerDependencies": {
     "react": ">=16"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "name": "colorway",
-  "author": "Anthony Yarbrough",
-  "module": "dist/colorway.esm.js",
   "devDependencies": {
     "@types/react": "^16.9.35",
     "@types/react-dom": "^16.9.8",
@@ -38,5 +33,10 @@
     "tsdx": "^0.13.2",
     "tslib": "^2.0.0",
     "typescript": "^3.9.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
   }
 }
