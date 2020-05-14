@@ -139,27 +139,29 @@ export const createChangeThemeFunction = <T extends Record<string, any>>({
   }
 }
 
-type Props = {
-  themes: DeepPartial<InjectableThemes>
-  defaultTheme: string
+type Props<T extends InjectableThemes> = {
+  themes: DeepPartial<T>
+  defaultTheme: keyof T
   localStorageKey: string
 }
 
-export const createInjectableScript = ({
+export const createInjectableScript = <T extends InjectableThemes>({
   themes,
   defaultTheme,
   localStorageKey,
-}: Props) => {
+}: Props<T>) => {
   // TODO: Consolidate to single object?
   const functionString = String(createCssVarThemes)
     .replace('__THEMES__', JSON.stringify(themes))
-    .replace('__DEFAULT_THEME__', defaultTheme)
+    .replace('__DEFAULT_THEME__', defaultTheme as string)
     .replace('__LOCAL_STORAGE_KEY__', localStorageKey)
 
   return `(${functionString})()`
 }
 
-export const InjectableScriptTag = (props: Props) => {
+export const InjectableScriptTag = <T extends InjectableThemes>(
+  props: Props<T>
+) => {
   return (
     <script
       dangerouslySetInnerHTML={{ __html: createInjectableScript(props) }}
