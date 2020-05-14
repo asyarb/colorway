@@ -77,7 +77,8 @@ const createCssVarThemes = () => {
   }
 
   const persistedThemeName = localStorage.getItem(localStorageKey)
-  if (persistedThemeName) root.classList.add(persistedThemeName)
+  if (persistedThemeName && persistedThemeName !== defaultThemeName)
+    root.classList.add(persistedThemeName)
 }
 
 /**
