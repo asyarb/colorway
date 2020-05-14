@@ -1,6 +1,5 @@
 import React from 'react'
-
-import { DeepPartial } from './types'
+import { DeepPartial } from 'ts-essentials'
 
 type InjectableTheme = {
   [key: string]: {
