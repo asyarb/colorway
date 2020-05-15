@@ -1,7 +1,7 @@
 # Colorway <!-- omit in toc -->
 
 Colorway is a tiny library for utilizing [CSS variables][css vars] as your
-primary themeing mechanism in your app or website. `colorway` is framework
+primary theming mechanism in your app or website. `colorway` is framework
 agnostic and can be integrated with any styling solution of your choice.
 
 - [Quick Features](#quick-features)
