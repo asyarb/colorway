@@ -102,8 +102,6 @@ app. This step may vary based on your current framework, bundler, and if you
 need SSR. See [examples](#examples) for some ways to integrate `colorway`.
 
 ```tsx
-// src/pages/_document.tsx
-// Contrived example
 import React from 'react'
 import { CssVars } from 'colorway'
 import { themes, DEFAULT_THEME_NAME, LOCAL_STORAGE_KEY } from '../themes'
