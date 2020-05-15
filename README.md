@@ -4,6 +4,26 @@ Colorway is a tiny library for utilizing [CSS variables][css vars] as your
 primary themeing mechanism in your app or website. `colorway` is framework
 agnostic and can be integrated with any styling solution of your choice.
 
+- [Colorway](#colorway)
+  - [Quick Features](#quick-features)
+  - [Examples](#examples)
+  - [Usage](#usage)
+  - [API](#api)
+    - [`<CssVars />`](#cssvars)
+      - [Example](#example)
+      - [Props](#props)
+    - [`injectCssVars`](#injectcssvars)
+      - [Example](#example-1)
+      - [Args](#args)
+    - [`convertThemeToCssVars`](#convertthemetocssvars)
+      - [Example](#example-2)
+    - [`createChangeThemeFn`](#createchangethemefn)
+      - [Example](#example-3)
+      - [Args](#args-1)
+    - [`getCurrentThemeName`](#getcurrentthemename)
+      - [Example](#example-4)
+      - [Args](#args-2)
+
 ## Quick Features
 
 - 💪 Framework/library agnostic. Use any solution that can generate a `class` or
