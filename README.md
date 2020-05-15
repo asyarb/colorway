@@ -69,7 +69,8 @@ const lightTheme = {
 }
 type Theme = typeof lightTheme
 
-// Typing as `AdditionalTheme` provides autocomplete from our default theme.
+// Typing as `AdditionalTheme` provides autocomplete and type-safety from
+// our default theme.
 const darkTheme: AdditionalTheme<Theme> = {
   colors: {
     text: 'white',
@@ -77,13 +78,12 @@ const darkTheme: AdditionalTheme<Theme> = {
   },
 }
 
-// We can support as many themes as we like in an objet like this:
+// We can support as many themes as we like in an object like this:
 export const themes = {
   lightTheme,
   darkTheme,
 }
 
-// We'll be using these values in other places, so let's make them constants.
 export const DEFAULT_THEME_NAME: keyof typeof themes = 'lightTheme'
 export const LOCAL_STORAGE_KEY = 'myThemeKey'
 
