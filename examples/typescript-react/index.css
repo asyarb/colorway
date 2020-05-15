@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  font-family: system-ui;
+}
+
+button {
+  color: inherit;
+  background: none;
+  border: 0;
+  font-size: inherit;
+  padding: 0.5rem;
+}

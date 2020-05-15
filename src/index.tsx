@@ -9,7 +9,11 @@ type InjectableTheme = {
 type InjectableThemes = {
   [key: string]: InjectableTheme
 }
-export type AdditionalTheme<T> = DeepPartial<T>
+type Props<T extends InjectableThemes> = {
+  themes: DeepPartial<T>
+  defaultThemeName: keyof T
+  localStorageKey: string
+}
 
 /**
  * Declares CSS variables and classes from a list of `themes`. This function should
@@ -22,29 +26,7 @@ const createCssVarThemes = () => {
   const themes = JSON.parse('__THEMES__') as InjectableThemes
   const defaultThemeName = '__DEFAULT_THEME__'
   const localStorageKey = '__LOCAL_STORAGE_KEY__'
-
-  // Initialize a CSS class name with our default theme values and add it to
-  // the root element. This allows us to selectively override variables
-  // in additional theme classes instead of needing to redefine every value.
   const root = document.documentElement
-  root.classList.add(defaultThemeName)
-
-  const defaultTheme = themes[defaultThemeName]
-  const defaultThemeStyleTag = document.createElement('style')
-  defaultThemeStyleTag.id = '__cssVarDefaultTheme'
-  document.head.appendChild(defaultThemeStyleTag)
-
-  let defaultThemeCssRule = `.${defaultThemeName}{`
-  for (const key in defaultTheme) {
-    for (const scaleKey in defaultTheme[key]) {
-      const cssVarName = `--${key}-${scaleKey}`
-      const cssVarValue = defaultTheme[key][scaleKey] as string
-
-      defaultThemeCssRule += `${cssVarName}:${cssVarValue};`
-    }
-  }
-  defaultThemeCssRule += '}'
-  defaultThemeStyleTag.sheet!.insertRule(defaultThemeCssRule)
 
   // Create a style tag to accumulate each of our theme
   // class names.
@@ -54,7 +36,7 @@ const createCssVarThemes = () => {
 
   // Generate class names for each of our additional themes.
   for (const themeName in themes) {
-    // We've already added the default theme styles to the root element,
+    // We've already added the default theme styles via our <style> fallback,
     // so let's skip it.
     if (themeName === defaultThemeName) continue
 
@@ -77,8 +59,131 @@ const createCssVarThemes = () => {
   }
 
   const persistedThemeName = localStorage.getItem(localStorageKey)
-  if (persistedThemeName && persistedThemeName !== defaultThemeName)
-    root.classList.add(persistedThemeName)
+  if (persistedThemeName) root.classList.add(persistedThemeName)
+}
+
+/**
+ * Creates the stringified IIFE that can be injected into a <script>
+ * tag to inject CSS vars before HTML is loaded.
+ * @private
+ *
+ * @param props
+ *
+ * @returns The stringified IIFE.
+ */
+const createInjectableCssVarFn = <T extends InjectableThemes>({
+  themes,
+  defaultThemeName,
+  localStorageKey,
+}: Props<T>) => {
+  const functionString = String(createCssVarThemes)
+    .replace('__THEMES__', JSON.stringify(themes))
+    .replace('__DEFAULT_THEME__', defaultThemeName as string)
+    .replace('__LOCAL_STORAGE_KEY__', localStorageKey)
+
+  return `(${functionString})()`
+}
+
+/**
+ * Creates the fallback CSS variable declaration style string that
+ * can be injected into a `<style>` tag. Allows for colors and styles for
+ * non-JS users and SSR.
+ * @private
+ *
+ * @param props
+ *
+ * @returns A valid CSS rule string initializing the CSS variables.
+ */
+const createFallbackStyleString = <T extends InjectableThemes>({
+  themes,
+  defaultThemeName,
+}: Omit<Props<T>, 'localStorageKey'>) => {
+  let styleString = 'html{'
+  const defaultTheme = themes[defaultThemeName as string]
+
+  for (const scale in defaultTheme) {
+    for (const scaleKey in defaultTheme[scale]) {
+      // For every value in this theme, create a fallback if no JS is enabled.
+      const cssVarName = `--${scale}-${scaleKey}`
+      const cssVarValue = defaultTheme[scale]![scaleKey]
+
+      styleString += `${cssVarName}:${cssVarValue};`
+    }
+  }
+  styleString += '}'
+
+  return styleString
+}
+
+/**
+ * Injects the CSS variable <script> tag at runtime.
+ * @private
+ */
+const injectCssVarScriptTag = <T extends InjectableThemes>(props: Props<T>) => {
+  const scriptTag = document.createElement('script')
+  scriptTag.id = '__cssVarsInjector'
+  scriptTag.innerHTML = createInjectableCssVarFn(props)
+  document.head.appendChild(scriptTag)
+}
+
+/**
+ * Injects the CSS variable fallback <style> tag at runtime.
+ * @private
+ */
+const injectCssVarFallbackStyleTag = <T extends InjectableThemes>(
+  props: Omit<Props<T>, 'localStorageKey'>
+) => {
+  const fallbackStyleRule = createFallbackStyleString(props)
+  const styleTag = document.createElement('style')
+  styleTag.id = '__cssVarsFallback'
+  document.head.appendChild(styleTag)
+
+  styleTag.sheet!.insertRule(fallbackStyleRule)
+}
+
+export type AdditionalTheme<T> = DeepPartial<T>
+
+type CreateChangeThemeFunctionArgs<T extends Record<string, any>> = {
+  themes: T
+  localStorageKey: string
+}
+/**
+ * Higher order function for creating a function to toggle between themes.
+ *
+ * @param args - Configuration options for the change theme function.
+ *
+ * @returns A strongly-typed function to change between themes and persist the
+ * theme preference to localStorage.
+ */
+export const createChangeThemeFn = <T extends Record<string, any>>({
+  themes,
+  localStorageKey,
+}: CreateChangeThemeFunctionArgs<T>) => {
+  return (newThemeName: keyof T) => {
+    const root = document.documentElement
+
+    // Remove all theme classNames except for the defaultTheme
+    for (const themeName in themes) {
+      root.classList.remove(themeName)
+    }
+    root.classList.add(newThemeName as string)
+
+    // persist this change into localStorage
+    localStorage.setItem(localStorageKey, newThemeName as string)
+  }
+}
+
+/**
+ * Retrieves the current theme name.
+ *
+ * @param defaultThemeName - The default theme name to fallback to if in SSR.
+ *
+ * @returns A string containing the active theme name.
+ */
+export const getCurrentThemeName = (defaultThemeName?: string) => {
+  if (typeof window === 'undefined') return defaultThemeName
+
+  return document.documentElement.className
 }
 
 /**
@@ -103,69 +208,40 @@ export const convertThemeToCssVars = <T extends InjectableTheme>(
   return cssVarTheme
 }
 
-type CreateChangeThemeFunctionArgs<T extends Record<string, any>> = {
-  themes: T
-  defaultThemeName: keyof T
-  localStorageKey: string
-}
 /**
- * Higher order function for creating a function to toggle between themes.
+ * A function that will inject the necessary HTML elements that will be placed into
+ * `<head>`. The injected `<script>` will inject our theme design tokens as
+ * CSS variables, and the injected `<style>` will contain our defaultTheme tokens.
  *
- * @param args - Configuration options for the change theme function.
+ * @remarks
+ * This is the primary way CSR'd apps can integrate `colorway`.
  *
- * @returns A strongly-typed function to change between themes and persist the
- * theme preference to localStorage.
+ * @param props
  */
-export const createChangeThemeFunction = <T extends Record<string, any>>({
-  themes,
-  defaultThemeName,
-  localStorageKey,
-}: CreateChangeThemeFunctionArgs<T>) => {
-  return (newThemeName: keyof T) => {
-    const root = document.documentElement
-
-    // Remove all theme classNames except for the defaultTheme
-    for (const themeName in themes) {
-      if (themeName === defaultThemeName) continue
-      root.classList.remove(themeName)
-    }
-
-    // If we're changing to a non-default-theme, add the appropriate
-    // class
-    if (newThemeName !== defaultThemeName)
-      root.classList.add(newThemeName as string)
-
-    // persist this change into localStorage
-    localStorage.setItem(localStorageKey, newThemeName as string)
-  }
+export const injectCssVars = <T extends InjectableThemes>(props: Props<T>) => {
+  injectCssVarFallbackStyleTag(props)
+  injectCssVarScriptTag(props)
 }
 
-type Props<T extends InjectableThemes> = {
-  themes: DeepPartial<T>
-  defaultTheme: keyof T
-  localStorageKey: string
-}
-
-export const createInjectableScript = <T extends InjectableThemes>({
-  themes,
-  defaultTheme,
-  localStorageKey,
-}: Props<T>) => {
-  // TODO: Consolidate to single object?
-  const functionString = String(createCssVarThemes)
-    .replace('__THEMES__', JSON.stringify(themes))
-    .replace('__DEFAULT_THEME__', defaultTheme as string)
-    .replace('__LOCAL_STORAGE_KEY__', localStorageKey)
-
-  return `(${functionString})()`
-}
-
-export const InjectableScriptTag = <T extends InjectableThemes>(
-  props: Props<T>
-) => {
+/**
+ * A React component for injecting our theme as CSS variables. This
+ * component should only be rendered in the `<head>` element through a manager such
+ * as `react-helmet-async`, NextJS's `<Head />` component, or Gatsby's
+ * `setPreBodyComponents()` hook.
+ *
+ * @remarks
+ * This is the primary way SSR'd apps can integrate `colorway`.
+ *
+ * @param props
+ */
+export const CssVars = <T extends InjectableThemes>(props: Props<T>) => {
   return (
-    <script
-      dangerouslySetInnerHTML={{ __html: createInjectableScript(props) }}
-    />
+    <>
+      <style id="__cssVarsFallback">{createFallbackStyleString(props)}</style>
+      <script
+        id="__cssVarsInjector"
+        dangerouslySetInnerHTML={{ __html: createInjectableCssVarFn(props) }}
+      />
+    </>
   )
 }
