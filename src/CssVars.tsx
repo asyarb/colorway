@@ -15,7 +15,9 @@ import { createInjectableCssVarFn } from './createInjectableCssVarFn'
  *
  * @param props
  */
-export const CssVars = <T extends InjectableThemes>(props: ColorwayArgs<T>) => {
+export const CssVars = <T extends InjectableThemes>(
+  props: ColorwayArgs<T>
+): JSX.Element => {
   return (
     <>
       <style id="__cssVarsFallback">{createFallbackStyleString(props)}</style>

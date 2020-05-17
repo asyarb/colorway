@@ -11,7 +11,7 @@ import { InjectableThemes, ColorwayArgs } from './types'
 export const createFallbackStyleString = <T extends InjectableThemes>({
   themes,
   defaultThemeName,
-}: Omit<ColorwayArgs<T>, 'localStorageKey'>) => {
+}: Omit<ColorwayArgs<T>, 'localStorageKey'>): string => {
   let styleString = 'html{'
   const defaultTheme = themes[defaultThemeName as string]
 

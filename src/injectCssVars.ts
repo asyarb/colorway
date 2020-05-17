@@ -14,7 +14,7 @@ import { injectCssVarScriptTag } from './injectCssVarScriptTag'
  */
 export const injectCssVars = <T extends InjectableThemes>(
   props: ColorwayArgs<T>
-) => {
+): void => {
   injectCssVarFallbackStyleTag(props)
   injectCssVarScriptTag(props)
 }
