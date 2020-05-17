@@ -15,7 +15,7 @@ export const createChangeThemeFn = <T extends Record<string, any>>({
   themes,
   localStorageKey,
 }: CreateChangeThemeFunctionArgs<T>): ((newThemeName: keyof T) => void) => {
-  return (newThemeName: keyof T) => {
+  return (newThemeName: keyof T): void => {
     const root = document.documentElement
 
     // Remove all theme classNames except for the defaultTheme
